@@ -117,15 +117,15 @@ def drag_motion(event):
     # print(f"{canvas.prevX} <-> {canvas.prevY}")
 
 def drag_stop(event = None):
-    bottom: int = root.winfo_height() - canvas.winfo_height() - 5
+    bottom: int =  root.winfo_screenheight() - sprite_img[0].height()
     currentY: int = canvas.winfo_y()
     canvas.state = "drag_stop"
     while True:
+        currentY += 1
         if(bottom > currentY and canvas.state != "drag_start"):
             canvas.itemconfig(sprite,image=sprite_img[0])
-            currentY += 8
+            currentY += 6
             canvas.place(x = canvas.winfo_x(), y = currentY)
-            print("Fall")
             root.update()
             # time.sleep(0.05)
         elif(canvas.state == "drag_start"):
@@ -139,11 +139,14 @@ def mouse_pos():
     # print(f"mouse on {x} - {y}")
     # canvas.state = "trigger"
 
-def mouse_leave(event):
-    print("Mouse Leave")
-    canvas.state = "move"
-    drag_stop()
+def handle_double_click(event):
+    print("Double Click")
         
+def right_click_popup(event):
+    try:
+        ctx_menu.tk_popup(event.x_root, event.y_root)
+    finally:
+        ctx_menu.grab_release()
 
 root = Tk()
 # width= root.winfo_screenwidth()               
@@ -166,17 +169,12 @@ Set working area (whole display except taskbar)
 """
 monitor_info = GetMonitorInfo(MonitorFromPoint((0,0)))
 work_area = monitor_info.get("Work")
-root.geometry("%dx%d" % (work_area[2], work_area[3]))
 print(root.winfo_screenheight())
 print(work_area)
 
 """
 Create sprite canvas
 """
-# label = Label(root, bg="red", width=5, height=5)
-# label.place(x=200, y=work_area[3] - 100, in_=root)
-# label.prevX: int = 200
-# label.prevY: int = work_area[3]- 100
 sprite_img: list = []
 for i in range(0, 7):
     sprite_img.append(PhotoImage(file=path(f"asset\sprite_walk_l_{i}.png")))
@@ -194,23 +192,26 @@ for i in range(0, 5):
     sprite_drag_img.append(PhotoImage(file=path(f"asset\sprite_drag_{i}.png")))
 
 canvas = Canvas(root, width=sprite_img[0].width() + 30, height=sprite_img[0].height(), bg='#2E2E8B', highlightthickness=0)
-canvas.place(x=200, y=work_area[3] -sprite_img[0].height())
+canvas.place(x=200, y=root.winfo_screenheight() - sprite_img[0].height())
 sprite = canvas.create_image(0, 0, anchor='nw', image=sprite_img[0])
-canvas.prevX: int = 200
-canvas.prevY: int = work_area[3]- sprite_img[0].height()
+canvas.prevX: int = 500
+canvas.prevY: int = root.winfo_screenheight() - sprite_img[0].height()
+canvas.state: str = "init"
 
 """
-Label binding
+Right click menu
 """
-# label.bind("<Button-1>", drag_start)
-# label.bind("<B1-Motion>", drag_motion)
-# label.bind("<ButtonRelease-1>", drag_stop)
-
+ctx_menu = Menu(root, tearoff=0)
+ctx_menu.add_command(label="Close", command=root.destroy)
+"""
+Sprite binding
+"""
 canvas.bind("<Button-1>", drag_start)
 canvas.bind("<B1-Motion>", drag_motion)
 canvas.bind("<ButtonRelease-1>", drag_stop)
-
+canvas.bind("<Double-Button-1>", handle_double_click)
+canvas.bind("<Button-3>", right_click_popup)
 # canvas.bind("<Leave>", mouse_leave)
-root.after(400, check_stop)
 move()
+root.after(400, check_stop)
 root.mainloop()
