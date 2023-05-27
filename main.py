@@ -8,6 +8,17 @@ import sys
 
 def path(target: str) -> str:
     return os.path.join(sys.path[0], target)
+
+"""
+Check if draging stopped
+"""
+def check_stop():
+    # print(f"{canvas.prevX} - {canvas.prevY} & {canvas.winfo_x()} - {canvas.winfo_y()}")
+    if(canvas.prevX == canvas.winfo_x() and canvas.prevY ==  canvas.winfo_y()):
+        canvas.itemconfig(sprite,image=sprite_img[0])
+        print("Move Stop")
+    root.after(300, check_stop)
+
 """
 Widget event handler
 """
@@ -21,9 +32,10 @@ def move():
     if(randBehave) : step: int = 2 
     else: step: int = -2
     while True:
-        print(frameCounter)
-        print(frameLimit)
-        print(randBehave)
+        # print(frameCounter)
+        # print(frameLimit)
+        # print(randBehave)
+        mouse_pos()
         if(canvas.state == "move"):
             frame: int = (frameCounter % 7)
             if(canvas.winfo_x() < 0):
@@ -60,8 +72,10 @@ def drag_start(event):
 def drag_motion(event):
     x = canvas.winfo_x() - canvas.startX + event.x
     y = canvas.winfo_y() - canvas.startY + event.y
+    print(f"{x} - {y}")
+    print(f"{canvas.prevX} = {canvas.prevY}")
     canvas.place(x=x, y=y)
-    canvas.itemconfig(sprite,image=sprite_img[0])
+    # canvas.itemconfig(sprite,image=sprite_img[0])
     if(canvas.prevX < x):
         print("Move Right")
         canvas.itemconfig(sprite,image=sprite_img[6])
@@ -78,7 +92,7 @@ def drag_motion(event):
     canvas.prevY = y
     # print(f"{canvas.prevX} <-> {canvas.prevY}")
 
-def drag_stop(event):
+def drag_stop(event = None):
     bottom: int = root.winfo_height() - canvas.winfo_height()
     currentY: int = canvas.winfo_y()
     canvas.state = "drag_stop"
@@ -95,6 +109,16 @@ def drag_stop(event):
         else:
             currentY = bottom
             move()
+
+def mouse_pos():
+    x, y = root.winfo_pointerxy()
+    print(f"mouse on {x} - {y}")
+    # canvas.state = "trigger"
+
+def mouse_leave(event):
+    print("Mouse Leave")
+    canvas.state = "move"
+    drag_stop()
         
 
 root = Tk()
@@ -132,11 +156,11 @@ Create sprite canvas
 sprite_img: list = []
 for i in range(1, 8):
     sprite_img.append(PhotoImage(file=path(f"asset\playerfr{i}.png")))
-canvas = Canvas(root, width=220, height=340, bg='#2E2E8B', highlightthickness=0)
-canvas.place(x=200, y=work_area[3] -520)
+canvas = Canvas(root, width=sprite_img[0].width() + 30, height=sprite_img[0].height(), bg='#2E2E8B', highlightthickness=0)
+canvas.place(x=200, y=work_area[3] -350)
 sprite = canvas.create_image(0, 0, anchor='nw', image=sprite_img[0])
 canvas.prevX: int = 200
-canvas.prevY: int = work_area[3]- 520
+canvas.prevY: int = work_area[3]- sprite_img[0].height()
 
 """
 Label binding
@@ -148,5 +172,8 @@ Label binding
 canvas.bind("<Button-1>", drag_start)
 canvas.bind("<B1-Motion>", drag_motion)
 canvas.bind("<ButtonRelease-1>", drag_stop)
+
+# canvas.bind("<Leave>", mouse_leave)
+root.after(300, check_stop)
 move()
 root.mainloop()
