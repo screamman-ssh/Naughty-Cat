@@ -6,23 +6,27 @@ import random
 import os.path
 import sys
 
-
+"""
+Path join function
+"""
 def path(target: str) -> str:
     return os.path.join(sys.path[0], target)
 
 """
 Check if draging stopped
 """
+stopFrameCount: int = 0
 def check_stop():
     global stopFrameCount
     if (canvas.prevX == canvas.winfo_x() and canvas.prevY == canvas.winfo_y()):
         canvas.itemconfig(sprite, image=sprite_drag_idle_img[stopFrameCount % 4])
+        #Count stop frame for drag idle animation
         stopFrameCount += 1
         print(f"Move Stop {stopFrameCount}")
     root.after(500, check_stop)
 
 """
-Widget event handler
+Sprite's movement and random behavior
 """
 def move():
     frameCounter: int = 0
@@ -36,6 +40,7 @@ def move():
     while True:
         # mouse_pos()
         if (canvas.state == "move"):
+            #Change direction when get to leftmost and rightmost of screen
             if (canvas.prevX < 0):
                 if (step < 0):
                     step *= -1
@@ -46,28 +51,33 @@ def move():
                     step *= -1
                 randBehave = 0
                 # print("move left")
-
+            #Chech if current behavior event end and random new behavior and duration(frame)
             if (frameCounter > frameLimit):
                 randBehave = random.randint(0, 3)
                 frameLimit = random.randint(0, 200)
                 frameCounter = 0
-
+            #Animate behavior
+            #Sit
             if (randBehave == 3):
                 frame = (frameCounter % 6)
                 step = 0
                 canvas.itemconfig(sprite, image=sprite_sit_img[frame])
+            #Idle
             elif (randBehave == 2):
                 frame = (frameCounter % 4)
                 step = 0
                 canvas.itemconfig(sprite, image=sprite_idle_img[frame])
+            #Walk to right
             elif (randBehave == 1):
                 frame = (frameCounter % 7)
                 step = 2
                 canvas.itemconfig(sprite, image=sprite_walk_r_img[frame])
+            #Walk to left
             else:
                 frame = (frameCounter % 7)
                 step = -2
                 canvas.itemconfig(sprite, image=sprite_img[frame])
+            #Update canvas
             canvas.prevX += step
             canvas.place(x=canvas.prevX)
             root.update()
@@ -76,7 +86,9 @@ def move():
         else:
             break
 
-
+"""
+Drag when start click event handler
+"""
 def drag_start(event):
     canvas.itemconfig(sprite, image=sprite_drag_img[0])
     canvas.startX = event.x
@@ -85,19 +97,18 @@ def drag_start(event):
     canvas.prevY = canvas.winfo_y()
     # canvas.state = "drag_start"
 
-
+"""
+Drag move event handler
+"""
 def drag_motion(event):
     x = canvas.winfo_x() - canvas.startX + event.x
     y = canvas.winfo_y() - canvas.startY + event.y
-    # print(f"{x} - {y}")
-    # print(f"{canvas.prevX} = {canvas.prevY}")
-    canvas.state = "drag move"
-    print(f"{canvas.state}")
+    canvas.state = "drag_move"
     canvas.place(x=x, y=y)
-
-    #Count stop frame for drag idle animation
+    #Set zero to stop frame
     global stopFrameCount
     stopFrameCount = 0
+    #Detect which direction sprite has been move by draging
     if (canvas.prevX + 8 < x):
         # canvas.state = "move right"
         canvas.itemconfig(sprite, image=sprite_drag_img[2])
@@ -110,42 +121,42 @@ def drag_motion(event):
     elif (canvas.prevX - 3 > x):
         canvas.itemconfig(sprite, image=sprite_drag_img[3])
         # print("Slightly Move Left")
-
     if (canvas.prevY < y):
-        # canvas.itemconfig(sprite,image=sprite_img[0])
         print("Move Down")
     elif (canvas.prevY > y):
-        # canvas.itemconfig(sprite,image=sprite_img[1])
         print("Move Up")
     canvas.prevX = x
     canvas.prevY = y
-    # print(f"{canvas.prevX} <-> {canvas.prevY}")
 
-
+"""
+Stop dragging / Button leave event handler
+"""
 def drag_stop(event=None):
     bottom: int = root.winfo_screenheight() - sprite_img[0].height()
     currentY: int = canvas.prevY
     canvas.state = "drag_stop"
     print(f"{canvas.prevY} {bottom}")
     while True:
+        #Fall event and animation
         if (bottom > currentY and canvas.state != "drag_start"):
             canvas.itemconfig(sprite, image=sprite_img[0])
             currentY += 5
             canvas.place(x=canvas.winfo_x(), y=currentY)
             root.update()
             # time.sleep(0.05)
-        elif (canvas.state != "drag move"):
+        elif (canvas.state != "drag_move"):
             currentY = bottom
             canvas.state = "move"
             move()
         else:
             break
-
-
+"""
+Pet animation
+"""
 def pet():
     canvas.state = "pet"
-    for i in range(0, 60):
-        if (canvas.state != "drag move"):
+    for i in range(0, 30):
+        if (canvas.state != "drag_move"):
             time.sleep(0.1)
             canvas.itemconfig(sprite, image=sprite_love_img[i % 6])
             root.update()
@@ -156,12 +167,9 @@ def pet():
     # x, y = root.winfo_pointerxy()
     # print(f"mouse on {x} - {y}")
     # canvas.state = "trigger"
-
-
-def handle_double_click(event):
-    print("Double Click")
-
-
+"""
+Context menu popup event handler
+"""
 def right_click_popup(event):
     try:
         ctx_menu.tk_popup(event.x_root, event.y_root)
@@ -171,29 +179,23 @@ def right_click_popup(event):
 
 """
 Create root window
-Set transparent and click-throught window
 """
 root = Tk()
 root.state('zoomed')
+#Set transparent and click-throught window
 root.attributes('-transparentcolor', '#2E2E8B', '-topmost', 1)
 root.config(bg='#2E2E8B')
 root.attributes("-topmost", True)
-
-"""
-Set borderless window
-"""
+#Set borderless window
 root.overrideredirect(True)
-
-"""
-Set working area (whole display except taskbar)
-"""
+#Set working area (whole display except taskbar)
 monitor_info = GetMonitorInfo(MonitorFromPoint((0, 0)))
 work_area = monitor_info.get("Work")
 print(root.winfo_screenheight())
 print(work_area)
 
 """
-Create sprite canvas
+Set image list by behavior
 """
 sprite_img: list = []
 for i in range(0, 7):
@@ -224,8 +226,10 @@ sprite_drag_idle_img: list = []
 for i in range(0, 4):
     sprite_drag_idle_img.append(PhotoImage(file=path(f"asset\sprite_drag_idle_{i}.png")))
 
-canvas = Canvas(root, width=sprite_img[0].width(
-) + 30, height=sprite_img[0].height(), bg='#2E2E8B', highlightthickness=0)
+"""
+Create sprite canvas
+"""
+canvas = Canvas(root, width=sprite_img[0].width() + 30, height=sprite_img[0].height(), bg='#2E2E8B', highlightthickness=0)
 canvas.place(x=200, y=root.winfo_screenheight() - sprite_img[0].height())
 sprite = canvas.create_image(0, 0, anchor='nw', image=sprite_img[0])
 canvas.prevX: int = 500
@@ -239,15 +243,19 @@ ctx_menu = Menu(root, tearoff=0)
 ctx_menu.add_command(label="Pet", command=pet)
 ctx_menu.add_separator()
 ctx_menu.add_command(label="Close", command=root.destroy)
+
 """
 Sprite binding
 """
 canvas.bind("<Button-1>", drag_start)
 canvas.bind("<B1-Motion>", drag_motion)
 canvas.bind("<ButtonRelease-1>", drag_stop)
-# root.bind("<Double-1>", handle_double_click)
 canvas.bind("<Button-3>", right_click_popup)
 # canvas.bind("<Leave>", mouse_leave)
-move()
+
+"""
+Start animate sprite
+"""
+drag_stop()
 root.after(500, check_stop)
 root.mainloop()
