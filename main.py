@@ -1,17 +1,23 @@
 from tkinter import *
 from tkinter import ttk
-from win32api import GetMonitorInfo, MonitorFromPoint
 import time
 import random
 import os.path
 import sys
 
 """
-Path join function
+Get absolute path to resource, works for dev and for PyInstaller
 """
 def path(target: str) -> str:
-    return os.path.join(sys.path[0], target)
+    # return os.path.join(sys.path[0], target)
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
 
+    return os.path.join(base_path, target)
+    
 """
 Check if draging stopped
 """
@@ -23,7 +29,7 @@ def check_stop():
         #Count stop frame for drag idle animation
         stopFrameCount += 1
         print(f"Move Stop {stopFrameCount}")
-    root.after(500, check_stop)
+    overlayWin.after(400, check_stop)
 
 """
 Sprite's movement and random behavior
@@ -46,7 +52,7 @@ def move():
                     step *= -1
                 randBehave = 1
                 # print("move right")
-            elif (canvas.prevX > root.winfo_screenwidth()):
+            elif (canvas.prevX > overlayWin.winfo_screenwidth()):
                 if (step > 0):
                     step *= -1
                 randBehave = 0
@@ -80,7 +86,7 @@ def move():
             #Update canvas
             canvas.prevX += step
             canvas.place(x=canvas.prevX)
-            root.update()
+            overlayWin.update()
             frameCounter += 1
             time.sleep(0.1)
         else:
@@ -132,7 +138,7 @@ def drag_motion(event):
 Stop dragging / Button leave event handler
 """
 def drag_stop(event=None):
-    bottom: int = root.winfo_screenheight() - sprite_img[0].height()
+    bottom: int = overlayWin.winfo_screenheight() - sprite_img[0].height()
     currentY: int = canvas.prevY
     canvas.state = "drag_stop"
     print(f"{canvas.prevY} {bottom}")
@@ -142,7 +148,7 @@ def drag_stop(event=None):
             canvas.itemconfig(sprite, image=sprite_img[0])
             currentY += 5
             canvas.place(x=canvas.winfo_x(), y=currentY)
-            root.update()
+            overlayWin.update()
             # time.sleep(0.05)
         elif (canvas.state != "drag_move"):
             currentY = bottom
@@ -159,7 +165,7 @@ def pet():
         if (canvas.state != "drag_move"):
             time.sleep(0.1)
             canvas.itemconfig(sprite, image=sprite_love_img[i % 6])
-            root.update()
+            overlayWin.update()
         else:
             break
 
@@ -176,86 +182,90 @@ def right_click_popup(event):
     finally:
         ctx_menu.grab_release()
 
+def start_overlay_screen():
+    #Start animate sprite
+    root.withdraw()
+    overlayWin.deiconify()
+    overlayWin.state('zoomed')
+    drag_stop()
+    overlayWin.after(400, check_stop)
+
+def open_main_window():
+    root.deiconify()
+    overlayWin.withdraw()
+
 
 """
-Create root window
+Create window
 """
-root = Tk()
-root.state('zoomed')
-#Set transparent and click-throught window
-root.attributes('-transparentcolor', '#2E2E8B', '-topmost', 1)
-root.config(bg='#2E2E8B')
-root.attributes("-topmost", True)
-#Set borderless window
-root.overrideredirect(True)
-#Set working area (whole display except taskbar)
-monitor_info = GetMonitorInfo(MonitorFromPoint((0, 0)))
-work_area = monitor_info.get("Work")
-print(root.winfo_screenheight())
-print(work_area)
+if __name__ == "__main__":
+    #Create root window
+    root = Tk()
+    root.geometry("250x70")
+    root.title("Naughty Cat")
+    root.resizable(0,0)
 
-"""
-Set image list by behavior
-"""
-sprite_img: list = []
-for i in range(0, 7):
-    sprite_img.append(PhotoImage(file=path(f"asset\sprite_walk_l_{i}.png")))
+    #Create overlay window
+    overlayWin = Toplevel(root)
+    #Set transparent and click-throught window
+    overlayWin.config(bg='#2E2E8B')
+    overlayWin.attributes('-transparentcolor', '#2E2E8B', '-topmost', 1)
+    overlayWin.attributes("-topmost", True)
+    overlayWin.overrideredirect(True)
+    #Set borderless window
+    initOverlayButton = ttk.Button(root, text="Start", command=start_overlay_screen)
+    initOverlayButton.place(relx=.5, rely=.5,anchor= CENTER)
 
-sprite_walk_r_img: list = []
-for i in range(0, 7):
-    sprite_walk_r_img.append(PhotoImage(
-        file=path(f"asset\sprite_walk_r_{i}.png")))
+    #Set image list by behavior
+    sprite_img: list = []
+    for i in range(0, 7):
+        sprite_img.append(PhotoImage(file=path(f"asset\sprite_walk_l_{i}.png")))
 
-sprite_idle_img: list = []
-for i in range(0, 4):
-    sprite_idle_img.append(PhotoImage(file=path(f"asset\sprite_idle_{i}.png")))
+    sprite_walk_r_img: list = []
+    for i in range(0, 7):
+        sprite_walk_r_img.append(PhotoImage(file=path(f"asset\sprite_walk_r_{i}.png")))
 
-sprite_sit_img: list = []
-for i in range(0, 6):
-    sprite_sit_img.append(PhotoImage(file=path(f"asset\sprite_sit_{i}.png")))
+    sprite_idle_img: list = []
+    for i in range(0, 4):
+        sprite_idle_img.append(PhotoImage(file=path(f"asset\sprite_idle_{i}.png")))
 
-sprite_love_img: list = []
-for i in range(0, 6):
-    sprite_love_img.append(PhotoImage(file=path(f"asset\sprite_love_{i}.png")))
+    sprite_sit_img: list = []
+    for i in range(0, 6):
+        sprite_sit_img.append(PhotoImage(file=path(f"asset\sprite_sit_{i}.png")))
 
-sprite_drag_img: list = []
-for i in range(0, 5):
-    sprite_drag_img.append(PhotoImage(file=path(f"asset\sprite_drag_{i}.png")))
+    sprite_love_img: list = []
+    for i in range(0, 6):
+        sprite_love_img.append(PhotoImage(file=path(f"asset\sprite_love_{i}.png")))
 
-sprite_drag_idle_img: list = []
-for i in range(0, 4):
-    sprite_drag_idle_img.append(PhotoImage(file=path(f"asset\sprite_drag_idle_{i}.png")))
+    sprite_drag_img: list = []
+    for i in range(0, 5):
+        sprite_drag_img.append(PhotoImage(file=path(f"asset\sprite_drag_{i}.png")))
 
-"""
-Create sprite canvas
-"""
-canvas = Canvas(root, width=sprite_img[0].width() + 30, height=sprite_img[0].height(), bg='#2E2E8B', highlightthickness=0)
-canvas.place(x=200, y=root.winfo_screenheight() - sprite_img[0].height())
-sprite = canvas.create_image(0, 0, anchor='nw', image=sprite_img[0])
-canvas.prevX: int = 500
-canvas.prevY: int = root.winfo_screenheight() - sprite_img[0].height()
-canvas.state: str = "move"
+    sprite_drag_idle_img: list = []
+    for i in range(0, 4):
+        sprite_drag_idle_img.append(PhotoImage(file=path(f"asset\sprite_drag_idle_{i}.png")))
 
-"""
-Right click menu
-"""
-ctx_menu = Menu(root, tearoff=0)
-ctx_menu.add_command(label="Pet", command=pet)
-ctx_menu.add_separator()
-ctx_menu.add_command(label="Close", command=root.destroy)
+    #Create sprite canvas
+    canvas = Canvas(overlayWin, width=sprite_img[0].width() + 30, height=sprite_img[0].height(), bg='#2E2E8B', highlightthickness=0)
+    canvas.place(x=200, y=overlayWin.winfo_screenheight() - sprite_img[0].height())
+    sprite = canvas.create_image(0, 0, anchor='nw', image=sprite_img[0])
+    canvas.prevX: int = 500
+    canvas.prevY: int = overlayWin.winfo_screenheight() - sprite_img[0].height()
+    canvas.state: str = "move"
+    overlayWin.withdraw()
 
-"""
-Sprite binding
-"""
-canvas.bind("<Button-1>", drag_start)
-canvas.bind("<B1-Motion>", drag_motion)
-canvas.bind("<ButtonRelease-1>", drag_stop)
-canvas.bind("<Button-3>", right_click_popup)
-# canvas.bind("<Leave>", mouse_leave)
+    #Right click menu
+    ctx_menu = Menu(overlayWin, tearoff=0)
+    ctx_menu.add_command(label="Pet", command=pet)
+    ctx_menu.add_separator()
+    ctx_menu.add_command(label="Open Main Window", command=open_main_window)
+    ctx_menu.add_command(label="Close", command=root.destroy)
 
-"""
-Start animate sprite
-"""
-drag_stop()
-root.after(500, check_stop)
-root.mainloop()
+    #Sprite binding
+    canvas.bind("<Button-1>", drag_start)
+    canvas.bind("<B1-Motion>", drag_motion)
+    canvas.bind("<ButtonRelease-1>", drag_stop)
+    canvas.bind("<Button-3>", right_click_popup)
+    # canvas.bind("<Leave>", mouse_leave)
+
+    root.mainloop()
