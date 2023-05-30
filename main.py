@@ -21,7 +21,7 @@ if __name__ == "__main__":
     BG_CLR = "#FBEADA"
     #Create root window
     root : Tk = Tk()
-    root.geometry("255x90")
+    root.geometry("255x200")
     root.title("Naughty Cat")
     root.resizable(0,0)
     root.config(bg=BG_CLR)
@@ -32,14 +32,25 @@ if __name__ == "__main__":
 
     #Root/main window widget and layout
     root.grid_rowconfigure(1, weight=1)
-    root.grid_columnconfigure(1, weight=1)
-    mainFrame : ttk.Frame = ttk.Frame(root).grid(row=1, sticky="nsew")
-    iconLabel : ttk.Label = ttk.Label(mainFrame, image=icon, background=BG_CLR)
-    iconLabel.place(relx=0.15, rely=0.1)
-    titleLabel : ttk.Label = ttk.Label(mainFrame, text="Naughty Cat", font=('Arial', 18), background=BG_CLR)
-    titleLabel.place(relx=0.3, rely=0.13)
-    initOverlayButton : ttk.Button = ttk.Button(mainFrame, text="Start", command=start_overlay_screen)
-    initOverlayButton.place(relx=0.5, rely=0.7, anchor=CENTER )
+    root.grid_columnconfigure(1, weight=3)
+    labelFrame : ttk.Frame = ttk.Frame(root).grid(row=0, column=0, padx=10,  pady=27)
+    iconLabel : ttk.Label = ttk.Label(labelFrame, image=icon, background=BG_CLR)
+    iconLabel.place(relx=0.15, rely=0.08)
+    titleLabel : ttk.Label = ttk.Label(labelFrame, text="Naughty Cat", font=('Arial', 18), background=BG_CLR)
+    titleLabel.place(relx=0.3, rely=0.1)
+    #Create cat button to select cat skin
+    catNameList : list[str] = ["orange_cat", "black_cat", "orange_cat"]
+    catButtonList : list[ttk.Button] = []
+    catIcon : list[any] = []
+    for i in range(0, 3):
+        catImg : Image  = Image.open(path(f"asset\{catNameList[i]}\sprite_idle_0.png"))
+        catImg = catImg.resize((75, 75))
+        catIcon.append(ImageTk.PhotoImage(catImg))
+        catButton : ttk.Button = ttk.Button(root, image=catIcon[i], command=lambda catName = catNameList[i] : sprite.change_skin(catName)).grid(row=1, column=i, pady=10)
+        catButtonList.append(catButton)
+    initOverlayButton : ttk.Button = ttk.Button(root, text="Start", command=start_overlay_screen)
+    # initOverlayButton.place(relx=0.5, rely=0.7, anchor=CENTER )
+    initOverlayButton.grid(row=2, column=1, pady=10)
 
     #Create overlay window
     overlayWin : Toplevel = Toplevel(root)

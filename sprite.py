@@ -22,7 +22,7 @@ Class Sprite module
 """
 class Sprite:
     def __init__(self, window: Toplevel, root: Tk) -> None:
-        self.__load_image()
+        self.__load_image("orange_cat")
         #Create sprite canvas
         self.__root : Tk = root
         self.__window : Toplevel = window
@@ -36,6 +36,7 @@ class Sprite:
         self.__canvas.startX : int = self.__canvas.prevX
         self.__canvas.startY : int = self.__canvas.prevY
         self.__canvas.state : str = "move"
+        self.bottom: int = self.__window.winfo_screenheight() - self.__sprite_img_dict["drag"][0].height()
         #Sprite binding
         self.__canvas.bind("<Button-1>", self.drag_start)
         self.__canvas.bind("<B1-Motion>", self.drag_motion)
@@ -48,12 +49,15 @@ class Sprite:
     """
     Load sprite's asset
     """
-    def __load_image(self) -> None:
+    def __load_image(self, catSkinName : str) -> None:
         #Set image list by behavior
         self.__sprite_img_detail : dict[str, int] = {"walk_l": 7, "walk_r": 7, "idle": 4, "sit": 6, "love": 6, "drag": 5, "drag_idle": 4}
         self.__sprite_img_dict : dict[str, list[any]] = {}
         for behave, frame in self.__sprite_img_detail.items():
-            self.__sprite_img_dict[behave] = [PhotoImage(file=path(f"asset\sprite_{behave}_{i}.png"))  for i in range(0, frame)]
+            self.__sprite_img_dict[behave] = [PhotoImage(file=path(f"asset\\{catSkinName}\\sprite_{behave}_{i}.png"))  for i in range(0, frame)]
+    
+    def change_skin(self, catSkinName : str) -> None:
+        self.__load_image(catSkinName)
     
     """
     Create context menu (right click menu) on sprite
@@ -148,7 +152,7 @@ class Sprite:
     stopFrameCount: int = 0
     def check_stop(self):
         global stopFrameCount
-        if (self.__canvas.prevX == self.__canvas.winfo_x() and self.__canvas.prevY == self.__canvas.winfo_y()):
+        if (self.__canvas.prevX == self.__canvas.winfo_x() and self.__canvas.prevY == self.__canvas.winfo_y() and self.__canvas.state == "drag_move"):
             self.__canvas.itemconfig(self.__sprite, image=self.__sprite_img_dict["drag_idle"][stopFrameCount % 4])
             #Count stop frame for drag idle animation
             stopFrameCount += 1
@@ -173,7 +177,6 @@ class Sprite:
         x = self.__canvas.winfo_x() - self.__canvas.startX + event.x
         y = self.__canvas.winfo_y() - self.__canvas.startY + event.y
         self.__canvas.state = "drag_move"
-        self.__canvas.place(x=x, y=y)
         #Set zero to stop frame
         global stopFrameCount
         stopFrameCount = 0
@@ -194,14 +197,19 @@ class Sprite:
         #     print("Move Down")
         # elif (self.__canvas.prevY > y):
         #     print("Move Up")
-        self.__canvas.prevX = x
-        self.__canvas.prevY = y
+        #Check if sprite on bottom
+        if (self.bottom >= y): 
+            self.__canvas.place(x=x, y=y)
+            self.__canvas.prevX = x
+            self.__canvas.prevY = y
+        else : 
+            self.__canvas.place(x=x)
+            self.__canvas.prevX = x
 
     """
     Stop dragging / Button leave event handler
     """
     def drag_stop(self, event=None) -> None:
-        self.bottom: int = self.__window.winfo_screenheight() - self.__sprite_img_dict["drag"][0].height()
         currentY: int = self.__canvas.prevY
         self.__canvas.state = "drag_stop"
         while True:
