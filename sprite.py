@@ -26,14 +26,16 @@ class Sprite:
         #Create sprite canvas
         self.__root : Tk = root
         self.__window : Toplevel = window
-        self.sprite_width : int = self.__sprite_img_dict["walk_l"][0].width()
-        self.sprite_height : int = self.__sprite_img_dict["walk_l"][0].height()
+        self.sprite_width : int = self.__sprite_img_dict["drag_idle"][0].width()
+        self.sprite_height : int = self.__sprite_img_dict["drag_idle"][0].height()
         self.__canvas : Canvas = Canvas(self.__window, width=self.sprite_width + 30, height=self.sprite_height, bg='#2E2E8B', highlightthickness=0)
-        self.__canvas.place(x=200, y=self.__window.winfo_screenheight() - self.sprite_height)
+        self.__canvas.place(x=(self.__window.winfo_screenwidth() / 2) - self.sprite_width, y= self.__window.winfo_screenheight() - self.sprite_height - 150)
         self.__sprite = self.__canvas.create_image(0, 0, anchor='nw', image=self.__sprite_img_dict["walk_l"][0])
-        self.__canvas.prevX: int = 500
-        self.__canvas.prevY: int = self.__window.winfo_screenheight() - self.sprite_height
-        self.__canvas.state: str = "move"
+        self.__canvas.prevX : int = (self.__window.winfo_screenwidth() / 2) - self.sprite_width
+        self.__canvas.prevY : int = self.__window.winfo_screenheight() - self.sprite_height - 150
+        self.__canvas.startX : int = self.__canvas.prevX
+        self.__canvas.startY : int = self.__canvas.prevY
+        self.__canvas.state : str = "move"
         #Sprite binding
         self.__canvas.bind("<Button-1>", self.drag_start)
         self.__canvas.bind("<B1-Motion>", self.drag_motion)
@@ -65,11 +67,21 @@ class Sprite:
         self.__ctx_menu.add_command(label="Close", command=self.__root.destroy)
 
     """
+    Context menu popup event handler
+    """
+    def right_click_popup(self, event) -> None:
+        try:
+            self.__ctx_menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            self.__ctx_menu.grab_release()
+
+    """
     Back to main window
     """
     def open_main_window(self) -> None:
         self.__root.deiconify()
         self.__window.withdraw()
+    
     """
     Sprite's movement and random behavior
     """
@@ -224,11 +236,4 @@ class Sprite:
         # x, y = root.winfo_pointerxy()
         # print(f"mouse on {x} - {y}")
         # canvas.state = "trigger"
-    """
-    Context menu popup event handler
-    """
-    def right_click_popup(self, event) -> None:
-        try:
-            self.__ctx_menu.tk_popup(event.x_root, event.y_root)
-        finally:
-            self.__ctx_menu.grab_release()
+   

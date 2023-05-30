@@ -8,7 +8,6 @@ Start overlay screen (cat screen)
 """
 def start_overlay_screen() -> None:
     #Start animate sprite
-    sprite : Sprite = Sprite(window=overlayWin, root=root)
     root.withdraw()
     overlayWin.deiconify()
     overlayWin.state('zoomed')
@@ -50,5 +49,8 @@ if __name__ == "__main__":
     overlayWin.attributes("-topmost", True)
     overlayWin.overrideredirect(True)   #Set borderless window
     overlayWin.withdraw()
+
+    #Create sprite
+    sprite : Sprite = Sprite(window=overlayWin, root=root)
 
     root.mainloop()
