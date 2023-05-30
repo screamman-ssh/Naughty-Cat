@@ -43,13 +43,19 @@ class Sprite:
         #Create context menu
         self.__create_ctx_menu()
 
+    """
+    Load sprite's asset
+    """
     def __load_image(self) -> None:
         #Set image list by behavior
         self.__sprite_img_detail : dict[str, int] = {"walk_l": 7, "walk_r": 7, "idle": 4, "sit": 6, "love": 6, "drag": 5, "drag_idle": 4}
         self.__sprite_img_dict : dict[str, list[any]] = {}
         for behave, frame in self.__sprite_img_detail.items():
             self.__sprite_img_dict[behave] = [PhotoImage(file=path(f"asset\sprite_{behave}_{i}.png"))  for i in range(0, frame)]
-        
+    
+    """
+    Create context menu (right click menu) on sprite
+    """
     def __create_ctx_menu(self) -> None:
         #Right click menu
         self.__ctx_menu : Menu = Menu(self.__window, tearoff=0)
@@ -134,7 +140,7 @@ class Sprite:
             self.__canvas.itemconfig(self.__sprite, image=self.__sprite_img_dict["drag_idle"][stopFrameCount % 4])
             #Count stop frame for drag idle animation
             stopFrameCount += 1
-            print(f"Move Stop {stopFrameCount}")
+            # print(f"Move Stop {stopFrameCount}")
         self.__window.after(400, self.check_stop)    
 
     """
@@ -172,10 +178,10 @@ class Sprite:
         elif (self.__canvas.prevX - 3 > x):
             self.__canvas.itemconfig(self.__sprite, image=self.__sprite_img_dict["drag"][3])
             # print("Slightly Move Left")
-        if (self.__canvas.prevY < y):
-            print("Move Down")
-        elif (self.__canvas.prevY > y):
-            print("Move Up")
+        # if (self.__canvas.prevY < y):
+        #     print("Move Down")
+        # elif (self.__canvas.prevY > y):
+        #     print("Move Up")
         self.__canvas.prevX = x
         self.__canvas.prevY = y
 
@@ -186,7 +192,6 @@ class Sprite:
         self.bottom: int = self.__window.winfo_screenheight() - self.__sprite_img_dict["drag"][0].height()
         currentY: int = self.__canvas.prevY
         self.__canvas.state = "drag_stop"
-        print(f"{self.__canvas.prevY} {self.bottom}")
         while True:
             #Fall event and animation
             if (self.bottom > currentY and self.__canvas.state != "drag_start"):
