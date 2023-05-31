@@ -39,7 +39,7 @@ if __name__ == "__main__":
     titleLabel : ttk.Label = ttk.Label(labelFrame, text="Naughty Cat", font=('Arial', 18), background=BG_CLR)
     titleLabel.place(relx=0.3, rely=0.1)
     #Create cat button to select cat skin
-    catNameList : list[str] = ["orange_cat", "black_cat", "orange_cat"]
+    catNameList : list[str] = ["orange_cat", "black_cat", "stripe_cat"]
     catButtonList : list[ttk.Button] = []
     catIcon : list[any] = []
     for i in range(0, 3):
@@ -49,7 +49,6 @@ if __name__ == "__main__":
         catButton : ttk.Button = ttk.Button(root, image=catIcon[i], command=lambda catName = catNameList[i] : sprite.change_skin(catName)).grid(row=1, column=i, pady=10)
         catButtonList.append(catButton)
     initOverlayButton : ttk.Button = ttk.Button(root, text="Start", command=start_overlay_screen)
-    # initOverlayButton.place(relx=0.5, rely=0.7, anchor=CENTER )
     initOverlayButton.grid(row=2, column=1, pady=10)
 
     #Create overlay window

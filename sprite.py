@@ -56,6 +56,9 @@ class Sprite:
         for behave, frame in self.__sprite_img_detail.items():
             self.__sprite_img_dict[behave] = [PhotoImage(file=path(f"asset\\{catSkinName}\\sprite_{behave}_{i}.png"))  for i in range(0, frame)]
     
+    """
+    Change cat's skin
+    """
     def change_skin(self, catSkinName : str) -> None:
         self.__load_image(catSkinName)
     
@@ -216,7 +219,7 @@ class Sprite:
             #Fall event and animation
             if (self.bottom > currentY and self.__canvas.state != "drag_start"):
                 self.__canvas.itemconfig(self.__sprite, image=self.__sprite_img_dict["drag"][0])
-                currentY += 5
+                currentY += 6
                 self.__canvas.place(x=self.__canvas.winfo_x(), y=currentY)
                 self.__window.update()
                 # time.sleep(0.05)
