@@ -25,7 +25,7 @@ if __name__ == "__main__":
     root.title("Naughty Cat")
     root.resizable(0,0)
     root.config(bg=BG_CLR)
-    iconImg : Image  = Image.open(path("icon.png"))
+    iconImg : Image  = Image.open(path("icon.ico"))
     iconImg = iconImg.resize((30, 30))
     icon: any = ImageTk.PhotoImage(iconImg)
     root.iconphoto(False, icon)
