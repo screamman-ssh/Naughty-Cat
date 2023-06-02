@@ -3,6 +3,7 @@ import time
 import random
 import os.path
 import sys
+import math
 
 """
 Get absolute path to resource, works for dev and for PyInstaller
@@ -173,7 +174,7 @@ class Sprite:
         self.__canvas.startY = event.y
         self.__canvas.prevX = self.__canvas.winfo_x()
         self.__canvas.prevY = self.__canvas.winfo_y()
-        # canvas.state = "drag_start"
+        self.__canvas.state = "drag_start"
 
     """
     Drag move event handler
@@ -244,28 +245,32 @@ class Sprite:
             else:
                 break
 
+    """
+    Ball catching behavior
+    """
     def catching_ball(self) -> None:
+        #Cancel behavior
         if (self.__canvas.state == "catching_ball") : 
             self.__canvas.state = "move"
             return
         self.__canvas.state = "catching_ball"
+        #Get mouse position
         mousePos : list[int] = self.__window.winfo_pointerxy()
+        #Create ball object
         ball : Ball = Ball(self.__window, mousePos)
         directionCatBehave : str = ""
         self.frame = 0
         step : int = 8
         while True:
-            if (self.__canvas.state != "move"):
+            if (self.__canvas.state not in ["move", "drag_start", "drag_move"]):
                 mousePos = self.__window.winfo_pointerxy()
                 ball.update_ball_position(mousePos)
+                # print(ball.get_postion[0])
                 currentX : int = self.__canvas.prevX
-                currentY : int = self.__canvas.prevY
-                print(currentX - (mousePos[0] - (self.__canvas.winfo_width() / 2)))
-                # print(currentX  (mousePos[0] - (self.__canvas.winfo_width() / 2)))
-                if (currentX < mousePos[0] - (self.__canvas.winfo_width() / 2) - step - 5) : 
+                if (currentX + (self.__canvas.winfo_width() / 2) < ball.get_postion[0]) : 
                     directionCatBehave = "walk_r"
                     self.__canvas.prevX += step
-                elif (currentX > mousePos[0] - (self.__canvas.winfo_width() / 2) + step + 5) : 
+                elif (currentX + 50 > ball.get_postion[0]) : 
                     directionCatBehave = "walk_l"
                     self.__canvas.prevX -= step
                 else:
@@ -274,22 +279,61 @@ class Sprite:
                 self.__canvas.place(x = self.__canvas.prevX)
                 self.frame += 1
                 self.__window.update()
-                time.sleep(0.1)
-            else : 
+                # print(abs(mousePos[0] - (self.__canvas.winfo_x() + 150)))
+                time.sleep(1/(math.sqrt(abs(ball.get_postion[0] - (self.__canvas.winfo_x() + 150)) + 100)))
+            else :
+                ball.clearing_ball() 
                 break
 
+"""
+Ball Class
+"""
 class Ball:
+    """
+    Create ball object
+    """
     def __init__(self, window : Toplevel, currentPos : list[int]) -> None:
         self.__window : Toplevel = window
         self.__ballImage : PhotoImage = PhotoImage(file=path("asset\\ball.png"))
         self.__ballCanvas : Canvas = Canvas(self.__window, width=self.__ballImage.width(), height=self.__ballImage.height(), bd=0, highlightthickness=0)
         self.__ballCanvas.create_image(0, 0, anchor='nw', image=self.__ballImage)
-        self.__ballCanvas.place(x=currentPos[0], y=currentPos[1])
+        self.__ballCanvas.place(x=currentPos[0] - 10, y=currentPos[1])
         self.__ballCanvas.prevX : int = currentPos[0]
         self.__ballCanvas.prevY : int = currentPos[1]
+        self.__ballCanvas.state : str = "normal"
+        self.__ballCanvas.bind("<Button-1>", self.ball_fall)
 
-    def update_ball_position(self, position : list[int]):
-        self.__ballCanvas.place(x=position[0], y=position[1])
+    """
+    Update ball postion
+    """
+    def update_ball_position(self, position : list[int]) -> None:
+        #Check if ball state is falling
+        if (self.__ballCanvas.state == "fall") :
+            bottom : int = self.__window.winfo_screenheight() - self.__ballImage.height() - 48 #48 is taskbar height
+            if (self.__ballCanvas.prevY + 15 < bottom) :
+                self.__ballCanvas.prevY += 15
+                self.__ballCanvas.place(y=self.__ballCanvas.prevY)
+            else :
+                self.__ballCanvas.place(y=bottom)
+            return
+        #if not fall, update position from parameter
+        self.__ballCanvas.place(x=position[0] - 10, y=position[1])
         self.__ballCanvas.prevX = position[0]
         self.__ballCanvas.prevY= position[1]
         self.__window.update()
+
+    """
+    Ball fall state changing
+    """
+    def ball_fall(self, event) -> None :
+        self.__ballCanvas.state = "fall"
+
+    """
+    Clear ball canvas
+    """
+    def clearing_ball(self) -> None :
+        self.__ballCanvas.destroy()
+    
+    @property
+    def get_postion(self) -> list[int] :
+        return [self.__ballCanvas.prevX, self.__ballCanvas.prevY]
