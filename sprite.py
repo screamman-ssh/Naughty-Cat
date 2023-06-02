@@ -24,6 +24,7 @@ class Sprite:
     def __init__(self, window: Toplevel, root: Tk) -> None:
         self.__load_image("orange_cat")
         #Create sprite canvas
+        self.frame : int = 0
         self.__root : Tk = root
         self.__window : Toplevel = window
         self.sprite_width : int = self.__sprite_img_dict["drag_idle"][0].width()
@@ -69,6 +70,7 @@ class Sprite:
         #Right click menu
         self.__ctx_menu : Menu = Menu(self.__window, tearoff=0)
         self.__ctx_menu.add_command(label="Pet", command=self.pet)
+        self.__ctx_menu.add_command(label="Ball", command=self.catching_ball)
         self.__ctx_menu.add_separator()
         self.__ctx_menu.add_command(label="Open Main Window", command=self.open_main_window)
         self.__ctx_menu.add_command(label="Close", command=self.__root.destroy)
@@ -93,7 +95,7 @@ class Sprite:
     Sprite's movement and random behavior
     """
     def move(self) -> None:
-        frameCounter: int = 0
+        self.frame = 0
         frameLimit: int = random.randint(0, 200)
         behaveStr: str = "idle"
         # Random move direction
@@ -117,10 +119,10 @@ class Sprite:
                     randBehave = 0
                     # print("move left")
                 #Chech if current behavior event end and random new behavior and duration(frame)
-                if (frameCounter > frameLimit):
+                if (self.frame > frameLimit):
                     randBehave = random.randint(0, 3)
                     frameLimit = random.randint(0, 200)
-                    frameCounter = 0
+                    self.frame = 0
                 #Animate behavior
                 #Sit
                 if (randBehave == 3):
@@ -139,12 +141,12 @@ class Sprite:
                     behaveStr = "walk_l"
                     step = -2
                 #Update canvas
-                frame = (frameCounter % self.__sprite_img_detail[behaveStr])
-                self.__canvas.itemconfig(self.__sprite, image=self.__sprite_img_dict[behaveStr][frame])
+                sprite_frame = (self.frame % self.__sprite_img_detail[behaveStr])
+                self.__canvas.itemconfig(self.__sprite, image=self.__sprite_img_dict[behaveStr][sprite_frame])
                 self.__canvas.prevX += step
                 self.__canvas.place(x=self.__canvas.prevX)
                 self.__window.update()
-                frameCounter += 1
+                self.frame += 1
                 time.sleep(0.1)
             else:
                 break
@@ -152,14 +154,14 @@ class Sprite:
     """
     Check if draging stopped
     """
-    stopFrameCount: int = 0
+    # stopFrameCount: int = 0
     def check_stop(self):
-        global stopFrameCount
+        # global stopFrameCount
         if (self.__canvas.prevX == self.__canvas.winfo_x() and self.__canvas.prevY == self.__canvas.winfo_y() and self.__canvas.state == "drag_move"):
-            self.__canvas.itemconfig(self.__sprite, image=self.__sprite_img_dict["drag_idle"][stopFrameCount % 4])
+            self.__canvas.itemconfig(self.__sprite, image=self.__sprite_img_dict["drag_idle"][self.frame % 4])
             #Count stop frame for drag idle animation
-            stopFrameCount += 1
-            # print(f"Move Stop {stopFrameCount}")
+            self.frame += 1
+            # print(f"Move Stop {self.frame}")
         self.__window.after(400, self.check_stop)    
 
     """
@@ -181,8 +183,7 @@ class Sprite:
         y = self.__canvas.winfo_y() - self.__canvas.startY + event.y
         self.__canvas.state = "drag_move"
         #Set zero to stop frame
-        global stopFrameCount
-        stopFrameCount = 0
+        self.frame = 0
         #Detect which direction sprite has been move by draging
         if (self.__canvas.prevX + 8 < x):
             # self.__canvas.state = "move right"
@@ -243,8 +244,52 @@ class Sprite:
             else:
                 break
 
-    # def mouse_pos():
-        # x, y = root.winfo_pointerxy()
-        # print(f"mouse on {x} - {y}")
-        # canvas.state = "trigger"
-   
+    def catching_ball(self) -> None:
+        if (self.__canvas.state == "catching_ball") : 
+            self.__canvas.state = "move"
+            return
+        self.__canvas.state = "catching_ball"
+        mousePos : list[int] = self.__window.winfo_pointerxy()
+        ball : Ball = Ball(self.__window, mousePos)
+        directionCatBehave : str = ""
+        self.frame = 0
+        step : int = 8
+        while True:
+            if (self.__canvas.state != "move"):
+                mousePos = self.__window.winfo_pointerxy()
+                ball.update_ball_position(mousePos)
+                currentX : int = self.__canvas.prevX
+                currentY : int = self.__canvas.prevY
+                print(currentX - (mousePos[0] - (self.__canvas.winfo_width() / 2)))
+                # print(currentX  (mousePos[0] - (self.__canvas.winfo_width() / 2)))
+                if (currentX < mousePos[0] - (self.__canvas.winfo_width() / 2) - step - 5) : 
+                    directionCatBehave = "walk_r"
+                    self.__canvas.prevX += step
+                elif (currentX > mousePos[0] - (self.__canvas.winfo_width() / 2) + step + 5) : 
+                    directionCatBehave = "walk_l"
+                    self.__canvas.prevX -= step
+                else:
+                    directionCatBehave = "sit"
+                self.__canvas.itemconfig(self.__sprite, image=self.__sprite_img_dict[directionCatBehave][self.frame % 6])
+                self.__canvas.place(x = self.__canvas.prevX)
+                self.frame += 1
+                self.__window.update()
+                time.sleep(0.1)
+            else : 
+                break
+
+class Ball:
+    def __init__(self, window : Toplevel, currentPos : list[int]) -> None:
+        self.__window : Toplevel = window
+        self.__ballImage : PhotoImage = PhotoImage(file=path("asset\\ball.png"))
+        self.__ballCanvas : Canvas = Canvas(self.__window, width=self.__ballImage.width(), height=self.__ballImage.height(), bd=0, highlightthickness=0)
+        self.__ballCanvas.create_image(0, 0, anchor='nw', image=self.__ballImage)
+        self.__ballCanvas.place(x=currentPos[0], y=currentPos[1])
+        self.__ballCanvas.prevX : int = currentPos[0]
+        self.__ballCanvas.prevY : int = currentPos[1]
+
+    def update_ball_position(self, position : list[int]):
+        self.__ballCanvas.place(x=position[0], y=position[1])
+        self.__ballCanvas.prevX = position[0]
+        self.__ballCanvas.prevY= position[1]
+        self.__window.update()
