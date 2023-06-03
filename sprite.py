@@ -250,9 +250,9 @@ class Sprite:
     """
     def catching_ball(self) -> None:
         #Cancel behavior
-        if (self.__canvas.state == "catching_ball") : 
-            self.__canvas.state = "move"
-            return
+        # if (self.__canvas.state not in ["catching_ball", "playing_ball") : 
+        #     self.__canvas.state = "move"
+        #     return
         self.__canvas.state = "catching_ball"
         #Get mouse position
         mousePos : list[int] = self.__window.winfo_pointerxy()
@@ -262,28 +262,37 @@ class Sprite:
         self.frame = 0
         step : int = 8
         while True:
-            if (self.__canvas.state not in ["move", "drag_start", "drag_move"]):
+            if (self.__canvas.state not in ["move", "drag_start", "drag_move", "playing_ball"]):
                 mousePos = self.__window.winfo_pointerxy()
                 ball.update_ball_position(mousePos)
                 # print(ball.get_postion[0])
                 currentX : int = self.__canvas.prevX
-                if (currentX + (self.__canvas.winfo_width() / 2) < ball.get_postion[0]) : 
+                if (currentX + (self.__sprite_img_dict["sit"][0].width() / 2) - 15 < ball.get_postion[0]) : 
                     directionCatBehave = "walk_r"
                     self.__canvas.prevX += step
-                elif (currentX + 50 > ball.get_postion[0]) : 
+                elif (currentX + (self.__sprite_img_dict["sit"][0].width() / 2) - 25 > ball.get_postion[0]) : 
                     directionCatBehave = "walk_l"
                     self.__canvas.prevX -= step
                 else:
+                    if (ball.get_ball_state == "ground") : 
+                        self.frame = 0
+                        self.__canvas.state = "playing_ball"
                     directionCatBehave = "sit"
-                self.__canvas.itemconfig(self.__sprite, image=self.__sprite_img_dict[directionCatBehave][self.frame % 6])
+                sprite_image : PhotoImage = self.__sprite_img_dict[directionCatBehave][self.frame % self.__sprite_img_detail[directionCatBehave]]
+                self.__canvas.itemconfig(self.__sprite, image=sprite_image)
                 self.__canvas.place(x = self.__canvas.prevX)
                 self.frame += 1
-                self.__window.update()
                 # print(abs(mousePos[0] - (self.__canvas.winfo_x() + 150)))
                 time.sleep(1/(math.sqrt(abs(ball.get_postion[0] - (self.__canvas.winfo_x() + 150)) + 100)))
+            elif (self.__canvas.state == "playing_ball") :
+                if (self.frame == 60) : self.__canvas.state = "move"
+                self.__canvas.itemconfig(self.__sprite, image=self.__sprite_img_dict["love"][self.frame % 6])
+                self.frame += 1
+                time.sleep(0.1)
             else :
                 ball.clearing_ball() 
                 break
+            self.__window.update()
 
 """
 Ball Class
@@ -314,7 +323,10 @@ class Ball:
                 self.__ballCanvas.prevY += 15
                 self.__ballCanvas.place(y=self.__ballCanvas.prevY)
             else :
+                self.__ballCanvas.state = "ground"
                 self.__ballCanvas.place(y=bottom)
+            return
+        elif (self.__ballCanvas.state == "ground") :
             return
         #if not fall, update position from parameter
         self.__ballCanvas.place(x=position[0] - 10, y=position[1])
@@ -336,4 +348,8 @@ class Ball:
     
     @property
     def get_postion(self) -> list[int] :
-        return [self.__ballCanvas.prevX, self.__ballCanvas.prevY]
+        return [self.__ballCanvas.prevX - (self.__ballImage.width() / 2), self.__ballCanvas.prevY]
+
+    @property
+    def get_ball_state(self) -> str :
+        return self.__ballCanvas.state
