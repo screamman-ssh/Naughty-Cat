@@ -1,3 +1,5 @@
 dev
 output
+build
+dist
 __pycache__

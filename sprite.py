@@ -329,7 +329,7 @@ class Ball:
         elif (self.__ballCanvas.state == "ground") :
             return
         #if not fall, update position from parameter
-        self.__ballCanvas.place(x=position[0] - 10, y=position[1])
+        self.__ballCanvas.place(x=position[0] - 20, y=position[1] - 20)
         self.__ballCanvas.prevX = position[0]
         self.__ballCanvas.prevY= position[1]
         self.__window.update()
@@ -346,10 +346,16 @@ class Ball:
     def clearing_ball(self) -> None :
         self.__ballCanvas.destroy()
     
+    """
+    Get ball position as a list
+    """
     @property
     def get_postion(self) -> list[int] :
         return [self.__ballCanvas.prevX - (self.__ballImage.width() / 2), self.__ballCanvas.prevY]
 
+    """
+    Get current ball's state
+    """
     @property
     def get_ball_state(self) -> str :
         return self.__ballCanvas.state
