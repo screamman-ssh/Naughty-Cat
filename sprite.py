@@ -39,11 +39,16 @@ class Sprite:
         self.__canvas.startY : int = self.__canvas.prevY
         self.__canvas.state : str = "move"
         self.bottom: int = self.__window.winfo_screenheight() - self.__sprite_img_dict["drag"][0].height()
+        #Status label
+        self.__energyStatus : float = 100
+        self.__statusLabel : Label = Label(self.__window, text=f"Energy {self.__energyStatus}", font=('Arial', 10))
         #Sprite binding
         self.__canvas.bind("<Button-1>", self.drag_start)
         self.__canvas.bind("<B1-Motion>", self.drag_motion)
         self.__canvas.bind("<ButtonRelease-1>", self.drag_stop)
         self.__canvas.bind("<Button-3>", self.right_click_popup)
+        self.__canvas.bind("<Enter>", self.show_status_popup)
+        self.__canvas.bind("<Leave>", self.close_status_popup)
         # canvas.bind("<Leave>", mouse_leave)
         #Create context menu
         self.__create_ctx_menu()
@@ -91,7 +96,21 @@ class Sprite:
     def open_main_window(self) -> None:
         self.__root.deiconify()
         self.__window.withdraw()
+
+    """
+    Status popup label handler
+    """
+    def show_status_popup(self, event) -> None:
+        if (self.__canvas.state == "drag_move"):
+            return
+        mousePos : list[int] = self.__window.winfo_pointerxy()
+        statusStr : str = f"Energy  {int(self.__energyStatus)} %"
+        self.__statusLabel.config(text=statusStr)
+        self.__statusLabel.place(x=mousePos[0], y=mousePos[1])
     
+    def close_status_popup(self, event) -> None:
+        self.__statusLabel.place_forget()
+
     """
     Sprite's movement and random behavior
     """
@@ -133,14 +152,17 @@ class Sprite:
                 elif (randBehave == 2):
                     behaveStr = "idle"
                     step = 0
+                    self.__energyStatus -= 0.001
                 #Walk to right
                 elif (randBehave == 1):
                     behaveStr = "walk_r"
                     step = 2
+                    self.__energyStatus -= 0.01
                 #Walk to left
                 else:
                     behaveStr = "walk_l"
                     step = -2
+                    self.__energyStatus -= 0.01
                 #Update canvas
                 sprite_frame = (self.frame % self.__sprite_img_detail[behaveStr])
                 self.__canvas.itemconfig(self.__sprite, image=self.__sprite_img_dict[behaveStr][sprite_frame])
