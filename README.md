@@ -2,7 +2,7 @@
 <p align="center" style="margin-bottom: 0">
    <img src="https://piskel-imgstore-b.appspot.com/img/33b11a82-02a0-11ee-bf3f-db5eb9a6bc3e.gif">
 </p>
-Naughty Cat is a tkinter app which provides you a virtual companion with digital lively and cute cats to interact with on the screen. Varies of random cat behaviour such as: walking, sitting, loving and interacting with the user, make it lively and friendly. It can be a little friend while working.
+Naughty Cat is a tkinter app which provides you a virtual companion with digital lively and cute cats to interact with on the screen. Varies of random cat behaviour such as: feeding, walking, sitting, loving and interacting with the user, make it lively and friendly. It can be a little friend while working.
 
 ## How to run/install
 Install the requirements and run app :
