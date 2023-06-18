@@ -41,7 +41,7 @@ class Sprite:
         self.bottom: int = self.__window.winfo_screenheight() - self.__sprite_img_dict["drag"][0].height()
         #Status label
         self.__energyStatus : float = 100
-        self.__statusLabel : Label = Label(self.__window, text=f"Energy {self.__energyStatus}", font=('Arial', 10))
+        self.__statusLabel : Label = Label(self.__window, text=f"Energy {self.__energyStatus}%", font=('Arial', 10))
         #Sprite binding
         self.__canvas.bind("<Button-1>", self.drag_start)
         self.__canvas.bind("<B1-Motion>", self.drag_motion)
@@ -58,7 +58,7 @@ class Sprite:
     """
     def __load_image(self, catSkinName : str) -> None:
         #Set image list by behavior
-        self.__sprite_img_detail : dict[str, int] = {"walk_l": 7, "walk_r": 7, "idle": 4, "sit": 6, "love": 6, "drag": 5, "drag_idle": 4, "eat": 6}
+        self.__sprite_img_detail : dict[str, int] = {"walk_l": 7, "walk_r": 7, "idle": 4, "sit": 6, "love": 6, "drag": 5, "drag_idle": 4, "eat": 6, "sleep": 6}
         self.__sprite_img_dict : dict[str, list[any]] = {}
         for behave, frame in self.__sprite_img_detail.items():
             self.__sprite_img_dict[behave] = [PhotoImage(file=path(f"asset\\{catSkinName}\\sprite_{behave}_{i}.png"))  for i in range(0, frame)]
@@ -127,7 +127,7 @@ class Sprite:
             step: int = -2
         while True:
             # mouse_pos()
-            if (self.__canvas.state == "move"):
+            if (self.__canvas.state in ["move", "sleep"]):
                 #Change direction when get to leftmost and rightmost of screen
                 if (self.__canvas.prevX < 0):
                     if (step < 0):
@@ -145,25 +145,32 @@ class Sprite:
                     frameLimit = random.randint(0, 200)
                     self.frame = 0
                 #Animate behavior
-                #Sit
-                if (randBehave == 3):
-                    behaveStr = "sit"
+                if (int(self.__energyStatus) <= 0):
+                    #Sleep
+                    self.__canvas.state = "sleep"
+                    behaveStr = "sleep"
                     step = 0
-                #Idle
-                elif (randBehave == 2):
-                    behaveStr = "idle"
-                    step = 0
-                    self.__energyStatus -= 0.001
-                #Walk to right
-                elif (randBehave == 1):
-                    behaveStr = "walk_r"
-                    step = 2
-                    self.__energyStatus -= 0.01
-                #Walk to left
+                    time.sleep(0.05)
                 else:
-                    behaveStr = "walk_l"
-                    step = -2
-                    self.__energyStatus -= 0.01
+                    #Sit
+                    if (randBehave == 3):
+                        behaveStr = "sit"
+                        step = 0
+                    #Idle
+                    elif (randBehave == 2):
+                        behaveStr = "idle"
+                        step = 0
+                        self.__energyStatus -= 0.001
+                    #Walk to right
+                    elif (randBehave == 1):
+                        behaveStr = "walk_r"
+                        step = 2
+                        self.__energyStatus -= 0.01
+                    #Walk to left
+                    else:
+                        behaveStr = "walk_l"
+                        step = -2
+                        self.__energyStatus -= 0.01
                 #Update canvas
                 sprite_frame = (self.frame % self.__sprite_img_detail[behaveStr])
                 self.__canvas.itemconfig(self.__sprite, image=self.__sprite_img_dict[behaveStr][sprite_frame])
@@ -259,9 +266,12 @@ class Sprite:
     Pet animation
     """
     def pet(self) -> None:
+        #Check sleep behavior
+        if (self.__canvas.state == "sleep") : 
+            return
         self.__canvas.state = "pet"
         for i in range(0, 30):
-            if (self.__canvas.state != "drag_move"):
+            if (self.__canvas.state == "drag_move"):
                 time.sleep(0.1)
                 self.__canvas.itemconfig(self.__sprite, image=self.__sprite_img_dict["love"][i % 6])
                 self.__window.update()
@@ -288,10 +298,9 @@ class Sprite:
     Ball catching behavior
     """
     def catching_ball(self) -> None:
-        #Cancel behavior
-        # if (self.__canvas.state not in ["catching_ball", "playing_ball") : 
-        #     self.__canvas.state = "move"
-        #     return
+        #Check sleep behavior
+        if (self.__canvas.state == "sleep") : 
+            return
         self.__canvas.state = "catching_ball"
         #Get mouse position
         mousePos : list[int] = self.__window.winfo_pointerxy()
