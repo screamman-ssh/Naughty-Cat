@@ -58,7 +58,7 @@ class Sprite:
     """
     def __load_image(self, catSkinName : str) -> None:
         #Set image list by behavior
-        self.__sprite_img_detail : dict[str, int] = {"walk_l": 7, "walk_r": 7, "idle": 4, "sit": 6, "love": 6, "drag": 5, "drag_idle": 4}
+        self.__sprite_img_detail : dict[str, int] = {"walk_l": 7, "walk_r": 7, "idle": 4, "sit": 6, "love": 6, "drag": 5, "drag_idle": 4, "eat": 6}
         self.__sprite_img_dict : dict[str, list[any]] = {}
         for behave, frame in self.__sprite_img_detail.items():
             self.__sprite_img_dict[behave] = [PhotoImage(file=path(f"asset\\{catSkinName}\\sprite_{behave}_{i}.png"))  for i in range(0, frame)]
@@ -75,6 +75,7 @@ class Sprite:
     def __create_ctx_menu(self) -> None:
         #Right click menu
         self.__ctx_menu : Menu = Menu(self.__window, tearoff=0)
+        self.__ctx_menu.add_command(label="Feed", command=self.feed)
         self.__ctx_menu.add_command(label="Pet", command=self.pet)
         self.__ctx_menu.add_command(label="Ball", command=self.catching_ball)
         self.__ctx_menu.add_separator()
@@ -104,7 +105,7 @@ class Sprite:
         if (self.__canvas.state == "drag_move"):
             return
         mousePos : list[int] = self.__window.winfo_pointerxy()
-        statusStr : str = f"Energy  {int(self.__energyStatus)} %"
+        statusStr : str = f"Energy  {int(self.__energyStatus)}%"
         self.__statusLabel.config(text=statusStr)
         self.__statusLabel.place(x=mousePos[0], y=mousePos[1])
     
@@ -263,6 +264,22 @@ class Sprite:
             if (self.__canvas.state != "drag_move"):
                 time.sleep(0.1)
                 self.__canvas.itemconfig(self.__sprite, image=self.__sprite_img_dict["love"][i % 6])
+                self.__window.update()
+            else:
+                break
+
+    """
+    Feed animation
+    """
+    def feed(self) -> None:
+        self.__canvas.state = "feed"
+        self.frame = 0
+        while self.__energyStatus < 100:
+            if (self.__canvas.state != "drag_move"):
+                time.sleep(0.1)
+                self.__canvas.itemconfig(self.__sprite, image=self.__sprite_img_dict["eat"][self.frame % 6])
+                self.__energyStatus += 0.5
+                self.frame += 1
                 self.__window.update()
             else:
                 break
